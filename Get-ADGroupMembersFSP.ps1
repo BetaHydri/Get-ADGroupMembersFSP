@@ -13,7 +13,7 @@ Jan Tiedemann
 .COMPANYNAME
 Microsoft
 
-.COPYRIGHT 2021
+.COPYRIGHT November 2021
 
 .TAGS
 ADGroup Groupmembers ActiveDirectory Groups Members FSP
