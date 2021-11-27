@@ -10,7 +10,7 @@ SAMPLE:
     .\Get-ADGroupMembersFSP -GroupeName "MY Group" -Recursive
     
 OUTPUT:
-|DistinguishedName                                                        | ObjectClass | NTAccount
-|-------------------------------------------------------------------------|-------------|------------
-|CN=IT-DA,OU=UserAccounts,DC=corp,DC=contoso,DC=com             | group   | CONTOSO\IT-DA
-|CN=wwioadministrator,OU=UserAccounts,DC=corp,DC=contoso,DC=com | user    | CONTOSO\wwioadministrator
+|DistinguishedName                                              | ObjectClass | NTAccount
+|-----------------------------------------------------------------------------|-------------|------------
+|CN=IT-DA,OU=UserAccounts,DC=corp,DC=contoso,DC=com             | group       | CONTOSO\IT-DA
+|CN=wwioadministrator,OU=UserAccounts,DC=corp,DC=contoso,DC=com | user        | CONTOSO\wwioadministrator
