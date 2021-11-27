@@ -1,12 +1,12 @@
 # Get-ADGroupMembersFSP
 
-DESCRIPTION:
+## DESCRIPTION:
     Gets the group membership and its Foreign Security Pricipals and translate them to a NTAccount.
     
-SAMPLE:
+### SAMPLE:
     .\Get-ADGroupMembersFSP -GroupeName "Domain Admins"
 
-SAMPLE:
+### SAMPLE:
     .\Get-ADGroupMembersFSP -GroupeName "MY Group" -Recursive
     
 OUTPUT:
