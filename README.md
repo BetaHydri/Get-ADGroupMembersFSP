@@ -5,6 +5,9 @@ DESCRIPTION:
     
 SAMPLE:
     .\Get-ADGroupMembersFSP -GroupeName "Domain Admins"
+
+SAMPLE:
+    .\Get-ADGroupMembersFSP -GroupeName "MY Group" -Recursive
     
 OUTPUT:
 |DistinguishedName                                                        | ObjectClass | NTAccount
