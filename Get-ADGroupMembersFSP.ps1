@@ -16,7 +16,7 @@ Microsoft
 .COPYRIGHT 2021
 
 .TAGS
-ADGroup Groupmembers ActiveDirectory Groups Members FSB
+ADGroup Groupmembers ActiveDirectory Groups Members FSP
 
 .DESCRIPTION
 Get the group membership an its Foreign Security Pricipals and translate them to a NTAccount.
