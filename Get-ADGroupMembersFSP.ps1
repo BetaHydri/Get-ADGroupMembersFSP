@@ -41,7 +41,7 @@ Returns a object with NoteProperties DistinguisehdName, ObjectClass, NTAccount
 .PARAMETER GroupName
     Required. This parameter represents the name of the group to investigate.
 .PARAMETER Recursive
-    Optional. This parameter tells the function to do a recursive membership query of the given groupmembership.
+    Optional. This parameter tells the function to do a recursive membership query.
 .EXAMPLE
      Get-ADGroupMembersFSP.ps1 -GroupName "Domain Admins"
      This example will output an object with all direct memebers of the Domain Admins group with their DN, ObjectClass and NTAccount
