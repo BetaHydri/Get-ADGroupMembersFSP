@@ -97,8 +97,18 @@ function Get-DomainFromDN {
 function Get-AllMembersFromGroup {
     [CmdletBinding()]
     param (
-        $GroupName,
-        $DomainName
+        [Parameter(Mandatory = $true,
+            Position = 0,
+            ValueFromPipelineByPropertyName = $true,
+            HelpMessage = "Enter GroupName to get members")]
+        [ValidateNotNullOrEmpty()]
+        [String]$GroupName,
+        [Parameter(Mandatory = $false,
+            Position = 1,
+            ValueFromPipelineByPropertyName = $true,
+            HelpMessage = "Enter Active Directory Domain FQDN")]
+        [ValidateNotNullOrEmpty()]
+        [String]$DomainName = (Get-ADDomain).DNSRoot
     )
     begin {
         $MemberList = @()
@@ -153,7 +163,12 @@ function Get-AllMembersFromGroup {
 function Get-MyMembers {
     [CmdletBinding()]
     param (
-        $GroupName,
+        [Parameter(Mandatory = $true,
+            Position = 0,
+            ValueFromPipelineByPropertyName = $true,
+            HelpMessage = "Enter GroupName to get members")]
+        [ValidateNotNullOrEmpty()]
+        [string]$GroupName,
         $DomainName = (Get-ADDomain).DNSRoot,
         [switch]$Recursive = $false
     )
@@ -201,7 +216,13 @@ function Resolve-FSPs {
     foreach ($member in $GroupMembers) {
         if ($member -like "*ForeignSecurityPrincipals*" ) {
             # Extract SID from foreign security principal DN
-            $FSPSID = $member.substring($member.indexof("=") + 1, $($member.indexof(",") - 3))
+            if ($member -like "*ACNF:*") {
+                # CNF stands for conflict, you should check your AD.
+                $FSPSID = $member.substring($member.indexof("=") + 1, $($member.indexof("\") - 3))
+            }
+            else {
+                $FSPSID = $member.substring($member.indexof("=") + 1, $($member.indexof(",") - 3))
+            }
             try {
                 # Translate FSBSid to NTAccount (aka Domain\user)
                 $SID = New-Object System.Security.Principal.SecurityIdentifier($FSPSID)
@@ -221,7 +242,7 @@ function Resolve-FSPs {
             $newList += $principalName
         }
     }
-    Return $newList
+    return $newList
 }
 #endregion
 
