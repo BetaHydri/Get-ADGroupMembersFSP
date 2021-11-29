@@ -240,12 +240,13 @@ switch ($Recursive) {
     $false {
         $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot)
         $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
-        # Merge the two Objects to One
+        # Merge the two Objects to one
         If (($memberDNs).count -gt 1) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
                 $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
             }
         }
+        # Merge the two Objects to one, when only one member exists in group
         else {
             $memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
         }   
@@ -254,12 +255,13 @@ switch ($Recursive) {
     $true {
         $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot) -Recursive
         $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
-        # Merge the two Objects to One
+        # Merge the two Objects to one
         If (($memberDNs).count -gt 1) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
                 $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
             }
         }
+        # Merge the two Objects to one, when only one member exists in group
         else {
             $memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
         }   
