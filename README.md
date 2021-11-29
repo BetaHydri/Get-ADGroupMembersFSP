@@ -4,10 +4,10 @@
     Gets the group membership and its Foreign Security Pricipals and translate them to a NTAccount.
     
 ### SAMPLE:
-    .\Get-ADGroupMembersFSP -GroupeName "Domain Admins"
+    .\Get-ADGroupMembersFSP -GroupName "Domain Admins"
 
 ### SAMPLE:
-    .\Get-ADGroupMembersFSP -GroupeName "MY Group" -Recursive
+    .\Get-ADGroupMembersFSP -GroupName "MY Group" -Recursive
     
 OUTPUT:
 |DistinguishedName                                              | ObjectClass | NTAccount
