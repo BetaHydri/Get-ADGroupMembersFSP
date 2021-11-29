@@ -101,23 +101,25 @@ function Get-AllMembersFromGroup {
         $DomainName
     )
     begin {
-        $memberlist = @()
+        $MemberList = @()
         $ObjectInfo = @()
     }
     process {
         try {
-            $memberlist = ((Get-ADGroup -Identity $GroupName -Server $DomainName -Properties Members).Members) 
-            foreach ($memberDN in $memberlist) {
+            # Array of group members
+            $MemberList = ((Get-ADGroup -Identity $GroupName -Server $DomainName -Properties Members).Members) 
+            foreach ($memberDN in $MemberList) {
                 # From UserDN make Domain FQDN
                 $domain = Get-DomainFromDN -DN $memberDN
                 # Check if DN Object is a group or other type
                 $AdObject = (Get-ADObject $memberDN -Server $domain -Properties DistinguishedName, ObjectClass, Name)
-                $ObjectList = [PSCustomObject]@{
+                $ObjectList = [PSCustomObject][ordered]@{
                     DistinguishedName = $memberDN
                     ObjectClass       = $AdObject.ObjectClass
                 }
                 If ($AdObject.objectClass -eq "group") {
                     do {
+                        # Adds PsCustomObject to Array
                         $ObjectInfo += $ObjectList
                         Write-Debug "Group: $AdObject.DistinguishedName"
                         Get-AllMembersFromGroup -GroupName $AdObject.DistinguishedName -DomainName $domain
@@ -125,12 +127,14 @@ function Get-AllMembersFromGroup {
                 }
                 Elseif ($AdObject.objectClass -eq "user") {
                     do {
+                        # Adds PsCustomObject to Arra
                         $ObjectInfo += $ObjectList
                         Write-Debug "User: $AdObject.DistinguishedName"
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))
                 }
                 Else {
                     do {
+                        # Adds PsCustomObject to Arra
                         $ObjectInfo += $ObjectList
                         Write-Debug "Others: $AdObject.DistinguishedName"
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))                    
@@ -143,7 +147,7 @@ function Get-AllMembersFromGroup {
         }
     }
     end {
-        Return ($ObjectInfo)
+        Return ([object[]]$ObjectInfo)
     }
 }
 function Get-MyMembers {
@@ -176,14 +180,14 @@ function Get-MyMembers {
             }
         }
         $true {
-            $membersrecursive = @()
+            $ObjectInfo = @()
             try {
-                $membersrecursive = Get-AllMembersFromGroup -GroupName $GroupName -DomainName $DomainName
+                $ObjectInfo = Get-AllMembersFromGroup -GroupName $GroupName -DomainName $DomainName
             }
             catch {
                 Write-Debug "$Error[0].Exception.InnerException.Message"
             }
-            return $membersrecursive 
+            return $ObjectInfo 
         }
     }
     
@@ -233,22 +237,32 @@ $memberDNs = @()
 $membersNTAccounts = @()
 Clear-Host
 switch ($Recursive) {
-    false {
+    $false {
         $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot)
         $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
         # Merge the two Objects to One
-        for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
-            $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
+        If (($memberDNs).count -gt 1) {
+            for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
+                $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
+            }
         }
+        else {
+            $memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
+        }   
 
     }
-    true {
+    $true {
         $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot) -Recursive
         $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
         # Merge the two Objects to One
-        for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
-            $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
+        If (($memberDNs).count -gt 1) {
+            for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
+                $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
+            }
         }
+        else {
+            $memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
+        }   
     }
 }
 $memberDNs
