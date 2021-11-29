@@ -226,7 +226,7 @@ try {
     Import-Module ActiveDirectory
 }
 Catch {
-    Write-Host "ActiveDirectory Module needed"
+    Write-Host "ActiveDirectory Module couldn't be loaded"
     break
 }
 $memberDNs = @()
@@ -236,6 +236,7 @@ switch ($Recursive) {
     false {
         $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot)
         $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
+        # Merge the two Objects to One
         for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
             $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
         }
@@ -244,6 +245,7 @@ switch ($Recursive) {
     true {
         $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot) -Recursive
         $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
+        # Merge the two Objects to One
         for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
             $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
         }
