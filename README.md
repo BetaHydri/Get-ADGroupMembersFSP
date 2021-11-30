@@ -15,11 +15,11 @@ SAMPLE3:
     Get group members of "My Group" in Domain corp.contoso.com recursively 
     .\Get-ADGroupMembersFSP -GroupName "MY Group" -DomainName corp.contoso.com -Recursive
 
-SAMPLE3:
+SAMPLE4:
     Get group members of "My Group" recursively but authenticate as corp\myuser
     .\Get-ADGroupMembersFSP -GroupName "MY Group" -UserName corp\myuser -Recursive
 
-SAMPLE4:
+SAMPLE5:
     Get group members of "My Group" in Domain corp.contoso.com recursively but authenticate as corp\myuser
     .\Get-ADGroupMembersFSP -GroupName "MY Group" -DomainName corp.contoso.com -UserName corp\myuser -Recursive
 ```
