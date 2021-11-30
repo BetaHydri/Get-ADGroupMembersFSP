@@ -298,7 +298,6 @@ Catch {
 }
 $memberDNs = @()
 $membersNTAccounts = @()
-Clear-Host
 switch ($Recursive) {
     $false {
         if ($Credential.IsPresent) {
