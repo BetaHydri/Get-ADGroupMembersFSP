@@ -57,8 +57,12 @@ param(
         HelpMessage = "Enter GroupName to get members")]
     [ValidateNotNullOrEmpty()]
     [String]$GroupName,
+    [Parameter(Mandatory = $false)]
+    [System.Management.Automation.PSCredential]
+    [System.Management.Automation.Credential()]
+    $Credential = [System.Management.Automation.PSCredential]::Empty, 
     [Parameter(Mandatory = $false,
-        Position = 1,
+        Position = 2,
         HelpMessage = "Enter GroupName to get members from")]
     [Switch]$Recursive = $false
 )
@@ -108,7 +112,7 @@ function Get-AllMembersFromGroup {
             ValueFromPipelineByPropertyName = $true,
             HelpMessage = "Enter Active Directory Domain FQDN")]
         [ValidateNotNullOrEmpty()]
-        [String]$DomainName = (Get-ADDomain).DNSRoot
+        [String]$DomainName = [System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1]
     )
     begin {
         $MemberList = @()
@@ -131,7 +135,7 @@ function Get-AllMembersFromGroup {
                     do {
                         # Adds PsCustomObject to Array
                         $ObjectInfo += $ObjectList
-                        Write-Debug "Group: $AdObject.DistinguishedName"
+                        Write-Host "Group: $AdObject.DistinguishedName"
                         Get-AllMembersFromGroup -GroupName $AdObject.DistinguishedName -DomainName $domain
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))                
                 }
@@ -139,21 +143,21 @@ function Get-AllMembersFromGroup {
                     do {
                         # Adds PsCustomObject to Arra
                         $ObjectInfo += $ObjectList
-                        Write-Debug "User: $AdObject.DistinguishedName"
+                        Write-Host "User: $AdObject.DistinguishedName"
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))
                 }
                 Else {
                     do {
                         # Adds PsCustomObject to Arra
                         $ObjectInfo += $ObjectList
-                        Write-Debug "Others: $AdObject.DistinguishedName"
+                        Write-Host "Others: $AdObject.DistinguishedName"
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))                    
                 }
                 
             }
         }
         catch {
-            Write-Debug "$Error[0].Exception.InnerException.Message"
+            Write-Host "$Error[0].Exception.InnerException.Message"
         }
     }
     end {
@@ -169,19 +173,31 @@ function Get-MyMembers {
             HelpMessage = "Enter GroupName to get members")]
         [ValidateNotNullOrEmpty()]
         [string]$GroupName,
-        $DomainName = (Get-ADDomain).DNSRoot,
+        [Parameter(Mandatory = $false)]
+        [PsCredential]$Credential,
+        $DomainName = [System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1],
         [switch]$Recursive = $false
     )
     switch ($Recursive) {
         $false { 
             $ObjectInfo = @()
             try {
-                $myMemberList = (Get-ADGroup $GroupName -Properties Members).Members
+                if ($Credential.IsPresent) {
+                    $myMemberList = (Get-ADGroup $GroupName -Credential $cred -Properties Members).Members
+                }
+                else {
+                    $myMemberList = (Get-ADGroup  $GroupName -Properties Members).Members
+                }
                 foreach ($memberDN in $myMemberList) {
                     # From UserDN make Domain FQDN
                     $domain = Get-DomainFromDN -DN $memberDN
                     # Check if DN Object is a group or other type
-                    $AdObject = (Get-ADObject $memberDN -Server $domain -Properties DistinguishedName, ObjectClass, Name)
+                    if ($Credential.IsPresent) {
+                        $AdObject = (Get-ADObject $memberDN -Server $domain -Credential $cred -Properties DistinguishedName, ObjectClass, Name)
+                    }
+                    else {
+                        $AdObject = (Get-ADObject $memberDN -Server $domain -Properties DistinguishedName, ObjectClass, Name)
+                    }
                     $ObjectList = [PSCustomObject][ordered]@{
                         DistinguishedName = $memberDN
                         ObjectClass       = $AdObject.ObjectClass
@@ -191,7 +207,7 @@ function Get-MyMembers {
                 return $ObjectInfo
             }
             catch {
-                Write-Debug "$Error[0].Exception.InnerException.Message"
+                Write-Host "$Error[0].Exception.InnerException.Message"
             }
         }
         $true {
@@ -200,7 +216,7 @@ function Get-MyMembers {
                 $ObjectInfo = Get-AllMembersFromGroup -GroupName $GroupName -DomainName $DomainName
             }
             catch {
-                Write-Debug "$Error[0].Exception.InnerException.Message"
+                Write-Host "$Error[0].Exception.InnerException.Message"
             }
             return $ObjectInfo 
         }
@@ -259,8 +275,15 @@ $membersNTAccounts = @()
 Clear-Host
 switch ($Recursive) {
     $false {
-        $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot)
-        $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
+        if ($Credential.IsPresent) {
+            #$Cred = Get-Credential -Message "Enter Username and Password"
+            $memberDNs = Get-MyMembers -GroupName $GroupName -Credential $Credential -DomainName ($(Get-ADDomain).DNSRoot)
+            $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName           
+        }
+        else {
+            $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot)
+            $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
+        }
         # Merge the two Objects to one
         If (($memberDNs).count -gt 1) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
@@ -274,7 +297,7 @@ switch ($Recursive) {
 
     }
     $true {
-        $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot) -Recursive
+        $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($([System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1])) -Recursive
         $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
         # Merge the two Objects to one
         If (($memberDNs).count -gt 1) {
