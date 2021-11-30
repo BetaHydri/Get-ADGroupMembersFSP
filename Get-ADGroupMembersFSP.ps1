@@ -183,7 +183,7 @@ function Get-MyMembers {
             $ObjectInfo = @()
             try {
                 if ($Credential.IsPresent) {
-                    $myMemberList = (Get-ADGroup $GroupName -Credential $cred -Properties Members).Members
+                    $myMemberList = (Get-ADGroup $GroupName -Credential $Credential -Properties Members).Members
                 }
                 else {
                     $myMemberList = (Get-ADGroup  $GroupName -Properties Members).Members
@@ -193,7 +193,7 @@ function Get-MyMembers {
                     $domain = Get-DomainFromDN -DN $memberDN
                     # Check if DN Object is a group or other type
                     if ($Credential.IsPresent) {
-                        $AdObject = (Get-ADObject $memberDN -Server $domain -Credential $cred -Properties DistinguishedName, ObjectClass, Name)
+                        $AdObject = (Get-ADObject $memberDN -Server $domain -Credential $Credential -Properties DistinguishedName, ObjectClass, Name)
                     }
                     else {
                         $AdObject = (Get-ADObject $memberDN -Server $domain -Properties DistinguishedName, ObjectClass, Name)
