@@ -66,10 +66,11 @@ param(
     [String]$DomainName = [System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1],    
     
     [Parameter(Mandatory = $false,
-        Position = 2)]
+        Position = 2,
+        HelpMessage = "Enter UserName to authenticate")]
     [System.Management.Automation.PSCredential]
     [System.Management.Automation.Credential()]
-    $Credential = [System.Management.Automation.PSCredential]::Empty, 
+    $UserName, 
     
     [Parameter(Mandatory = $false,
         Position = 3,
@@ -168,7 +169,7 @@ function Get-AllMembersFromGroup {
             }
         }
         catch {
-            Write-Host "$Error[0].Exception.InnerException.Message"
+            Write-Host $error[0].Exception.Message
         }
     }
     end {
@@ -230,7 +231,7 @@ function Get-MyMembers {
                 return $ObjectInfo
             }
             catch {
-                Write-Host "$Error[0].Exception.InnerException.Message"
+                Write-Host $error[0].Exception.Message
             }
         }
         $true {
@@ -239,7 +240,7 @@ function Get-MyMembers {
                 $ObjectInfo = Get-AllMembersFromGroup -GroupName $GroupName -DomainName $DomainName
             }
             catch {
-                Write-Host "$Error[0].Exception.InnerException.Message"
+                Write-Host $error[0].Exception.Message
             }
             return $ObjectInfo 
         }
@@ -300,8 +301,9 @@ $memberDNs = @()
 $membersNTAccounts = @()
 switch ($Recursive) {
     $false {
-        if ($Credential.IsPresent) {
-            $memberDNs = Get-MyMembers -GroupName $GroupName -Credential $Credential -DomainName $DomainName
+        if ($UserName) {
+            Write-Debug "Credentials: $UserName"
+            $memberDNs = Get-MyMembers -GroupName $GroupName -Credential $UserName -DomainName $DomainName
             $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName           
         }
         else {
@@ -321,8 +323,14 @@ switch ($Recursive) {
 
     }
     $true {
-        $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName $DomainName -Recursive
-        $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
+        if ($UserName) {
+            $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName $DomainName -Credential $UserName -Recursive
+            $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
+        }
+        else {
+            $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName $DomainName -Recursive
+            $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName            
+        }
         # Merge the two Objects to one
         If (($memberDNs).count -gt 1) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
