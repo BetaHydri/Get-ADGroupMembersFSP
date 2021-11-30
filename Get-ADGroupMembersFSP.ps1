@@ -154,7 +154,7 @@ function Get-AllMembersFromGroup {
                     do {
                         # Adds PsCustomObject to Arra
                         $ObjectInfo += $ObjectList
-                        Write-Debug"User: $AdObject.DistinguishedName"
+                        Write-Debug "User: $AdObject.DistinguishedName"
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))
                 }
                 Else {
@@ -185,20 +185,31 @@ function Get-MyMembers {
         [ValidateNotNullOrEmpty()]
         [string]$GroupName,
         
+        [Parameter(Mandatory = $true,
+        Position = 1,
+        ValueFromPipelineByPropertyName = $true,
+        HelpMessage = "Enter DomainFQDN to get group members from")]
+        [ValidateNotNullOrEmpty()]
+        [string]$DomainName,
+
         [Parameter(Mandatory = $false)]
         [PsCredential]$Credential,
-        $DomainName = [System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1],
+        
+        [Parameter(Mandatory = $false)]
         [switch]$Recursive = $false
     )
     switch ($Recursive) {
         $false { 
             $ObjectInfo = @()
             try {
-                if ($Credential.IsPresent) {
+                if ($Credential) {
                     $myMemberList = (Get-ADGroup $GroupName -Credential $Credential -Properties Members).Members
                 }
+                elseif ($Credential -and $DomainName) {
+                    $myMemberList = (Get-ADGroup $GroupName -Credential $Credential -Server $DomainName -Properties Members).Members
+                }
                 else {
-                    $myMemberList = (Get-ADGroup  $GroupName -Properties Members).Members
+                    $myMemberList = (Get-ADGroup $GroupName -Server $DomainName -Properties Members).Members
                 }
                 foreach ($memberDN in $myMemberList) {
                     # From UserDN make Domain FQDN
@@ -256,10 +267,12 @@ function Resolve-FSPs {
                 $SID = New-Object System.Security.Principal.SecurityIdentifier($FSPSID)
                 $Resolved = $SID.Translate([System.Security.Principal.NTAccount])
                 $newList += $Resolved.Value
+                Write-Debug "Resolved FSP-SID: $Resolved.Value"
             }
             catch {
                 # If SID can't be translated add at least FSB DN to new array
                 $newList += $member
+                Write-Debug "Unresolved FSP-SID: $member"
             }
         }
         else {
@@ -268,6 +281,7 @@ function Resolve-FSPs {
             # Get domain\user (aka msDS-PrincipalName) from ADUser DN
             $principalName = (Get-ADObject $member -Server $domain -Properties msDS-PrincipalName)."msDS-PrincipalName" 
             $newList += $principalName
+            Write-Debug "Normal Account: $principalName"
         }
     }
     return $newList
@@ -288,12 +302,11 @@ Clear-Host
 switch ($Recursive) {
     $false {
         if ($Credential.IsPresent) {
-            #$Cred = Get-Credential -Message "Enter Username and Password"
-            $memberDNs = Get-MyMembers -GroupName $GroupName -Credential $Credential -DomainName ($(Get-ADDomain).DNSRoot)
+            $memberDNs = Get-MyMembers -GroupName $GroupName -Credential $Credential -DomainName $DomainName
             $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName           
         }
         else {
-            $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName ($(Get-ADDomain).DNSRoot)
+            $memberDNs = Get-MyMembers -GroupName $GroupName -DomainName $DomainName
             $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
         }
         # Merge the two Objects to one
