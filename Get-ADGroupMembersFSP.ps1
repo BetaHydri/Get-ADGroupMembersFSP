@@ -118,12 +118,12 @@ function Get-AllMembersFromGroup {
         [ValidateNotNullOrEmpty()]
         [String]$GroupName,
         
-        [Parameter(Mandatory = $false,
+        [Parameter(Mandatory = $true,
             Position = 1,
             ValueFromPipelineByPropertyName = $true,
             HelpMessage = "Enter Active Directory Domain FQDN")]
         [ValidateNotNullOrEmpty()]
-        [String]$DomainName = [System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1]
+        [String]$DomainName
     )
     begin {
         $MemberList = @()
@@ -186,9 +186,9 @@ function Get-MyMembers {
         [string]$GroupName,
         
         [Parameter(Mandatory = $true,
-        Position = 1,
-        ValueFromPipelineByPropertyName = $true,
-        HelpMessage = "Enter DomainFQDN to get group members from")]
+            Position = 1,
+            ValueFromPipelineByPropertyName = $true,
+            HelpMessage = "Enter DomainFQDN to get group members from")]
         [ValidateNotNullOrEmpty()]
         [string]$DomainName,
 
