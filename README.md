@@ -10,7 +10,8 @@
     .\Get-ADGroupMembersFSP -GroupName "MY Group" -Recursive
 
 #### SAMPLE3:
-´´´ Get group members of "My Group" in Domain corp.contoso.com
+``` Get group members of "My Group" in Domain corp.contoso.com
+
     .\Get-ADGroupMembersFSP -GroupName "MY Group" -DomainName corp.contoso.com -Recursive
 
 #### SAMPLE3:
