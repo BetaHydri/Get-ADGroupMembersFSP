@@ -5,23 +5,23 @@
 ```   
 SAMPLE1:
     Get group members of Domain Admins" in domain of server
-    .\Get-ADGroupMembersFSP -GroupName "Domain Admins"
+    .\Get-ADGroupMembersFSP.ps1 -GroupName "Domain Admins"
 
 SAMPLE2:
     Get group members of "My Group" in Domain of server recursively 
-    .\Get-ADGroupMembersFSP -GroupName "MY Group" -Recursive
+    .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -Recursive
 
 SAMPLE3:
     Get group members of "My Group" in Domain corp.contoso.com recursively 
-    .\Get-ADGroupMembersFSP -GroupName "MY Group" -DomainName corp.contoso.com -Recursive
+    .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -DomainName corp.contoso.com -Recursive
 
 SAMPLE4:
     Get group members of "My Group" recursively but authenticate as corp\myuser
-    .\Get-ADGroupMembersFSP -GroupName "MY Group" -UserName corp\myuser -Recursive
+    .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -UserName corp\myuser -Recursive
 
 SAMPLE5:
     Get group members of "My Group" in Domain corp.contoso.com recursively but authenticate as corp\myuser
-    .\Get-ADGroupMembersFSP -GroupName "MY Group" -DomainName corp.contoso.com -UserName corp\myuser -Recursive
+    .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -DomainName corp.contoso.com -UserName corp\myuser -Recursive
 ```
     
 OUTPUT:
