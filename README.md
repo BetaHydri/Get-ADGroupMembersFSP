@@ -24,7 +24,7 @@ SAMPLE5:
     .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -DomainName corp.contoso.com -UserName corp\myuser -Recursive
 ```
     
-OUTPUT:
+OUTPUT as [PsCustomObject]:
 |DistinguishedName                                                              | ObjectClass    | NTAccount
 :-------------------------------------------------------------------------------|:---------------|:-------------------------------
 CN=AutoDL System Account,OU=CoreIdentity,DC=redmond,DC=contoso,DC=com,DC=com    | user           | REDMOND\adlsys    
