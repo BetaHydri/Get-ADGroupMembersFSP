@@ -25,7 +25,16 @@ SAMPLE5:
 ```
     
 OUTPUT:
-|DistinguishedName                                              | ObjectClass | NTAccount
-|---------------------------------------------------------------|-------------|--------------------------
-|CN=IT-DA,OU=UserAccounts,DC=corp,DC=contoso,DC=com             | group       | CONTOSO\IT-DA
-|CN=wwioadministrator,OU=UserAccounts,DC=corp,DC=contoso,DC=com | user        | CONTOSO\wwioadministrator
+DistinguishedName                                                                                             |           ObjectClass    |         NTAccount
+--------------------------------------------------------------------------------------------------------------|--------------------------|----------------------------------------------
+CN=AutoDL System Account,OU=Service,OU=ServiceAccounts,OU=CoreIdentity,DC=redmond,DC=contoso,DC=com,DC=com    |         user             |        REDMOND\adlsys
+CN=Exchange Domain Servers,CN=Users,DC=fareast,DC=contoso,DC=com,DC=com                                       |         group            |        FAREAST\Exchange Domain Servers
+CN=Exchange Domain Servers,CN=Users,DC=southpacific,DC=contoso,DC=com,DC=com                                  |         group            |        SOUTHPACIFIC\Exchange Domain Servers
+CN=Exchange Domain Servers,CN=Users,DC=europe,DC=contoso,DC=com,DC=com                                        |         group            |        EUROPE\Exchange Domain Servers
+CN=Exchange Domain Servers,CN=Users,DC=northamerica,DC=contoso,DC=com,DC=com                                  |         group            |        NORTHAMERICA\Exchange Domain Servers
+CN=Exchange Domain Servers,CN=Users,DC=southamerica,DC=contoso,DC=com,DC=com                                  |         group            |        SOUTHAMERICA\Exchange Domain Servers
+CN=Exchange Domain Servers,CN=Users,DC=africa,DC=contoso,DC=com,DC=com                                        |         group            |        AFRICA\Exchange Domain Servers
+CN=Exchange Domain Servers,CN=Users,DC=redmond,DC=contoso,DC=com,DC=com                                       |         group            |        REDMOND\Exchange Domain Servers
+CN=Exchange Domain Servers,CN=Users,DC=middleeast,DC=contoso,DC=com,DC=com                                    |         group            |        MIDDLEEAST\Exchange Domain Servers
+CN=S-1-5-11\0ACNF:df5167ba-e8fb-4de2-958d-720652128486,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com,DC=com | foreignSecurityPrincipal | NT AUTHORITY\Authenticated Users
+CN=S-1-1-0,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com,DC=com                                             | foreignSecurityPrincipal |Everyone
