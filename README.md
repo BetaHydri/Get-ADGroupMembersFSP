@@ -26,7 +26,7 @@ SAMPLE5:
     
 OUTPUT:
 DistinguishedName                                                                                             |           ObjectClass    |         NTAccount
---------------------------------------------------------------------------------------------------------------|--------------------------|----------------------------------------------
+:--------------------------------------------------------------------------------------------------------------|:--------------------------|:----------------------------------------------
 CN=AutoDL System Account,OU=Service,OU=ServiceAccounts,OU=CoreIdentity,DC=redmond,DC=contoso,DC=com,DC=com    |         user             |        REDMOND\adlsys
 CN=Exchange Domain Servers,CN=Users,DC=fareast,DC=contoso,DC=com,DC=com                                       |         group            |        FAREAST\Exchange Domain Servers
 CN=Exchange Domain Servers,CN=Users,DC=southpacific,DC=contoso,DC=com,DC=com                                  |         group            |        SOUTHPACIFIC\Exchange Domain Servers
