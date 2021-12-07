@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.2
+1.0.3
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -37,7 +37,8 @@ Gets the group membership and its Foreign Security Pricipals and translate them 
 .INPUTS
 An ActiveDirectory group name as string
 .OUTPUTS
-Returns a object with NoteProperties DistinguisehdName, ObjectClass, NTAccount
+Displays the initial group name with its direct or all unique members within the group 
+Returns a system array object with NoteProperties DistinguisehdName, ObjectClass, NTAccount
 .PARAMETER GroupName
     Required. This parameter represents the name of the group to investigate.
 .PARAMETER Recursive
