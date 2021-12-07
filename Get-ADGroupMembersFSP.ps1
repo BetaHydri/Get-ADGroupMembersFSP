@@ -343,5 +343,11 @@ switch ($Recursive) {
         }   
     }
 }
+if ($Recursive) {
+    Write-Host ("All unique members of group: {0}" -f $DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName)
+}
+else {
+    Write-Host ("Direct members of group: {0}" -f $DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName)
+}
 $memberDNs
 #endregion
