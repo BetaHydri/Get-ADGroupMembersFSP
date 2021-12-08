@@ -1,7 +1,7 @@
 # Get-ADGroupMembersFSP
 
 ### DESCRIPTION:
-    Gets the group membership and its Foreign Security Pricipals and translate them to a NTAccount.
+    Gets the group membership and its Foreign Security Principals and translate them to a NTAccount.
 ```   
 SAMPLE1:
     Get group members of Domain Admins" in domain of server
