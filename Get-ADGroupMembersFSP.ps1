@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.4
+1.0.5
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -170,7 +170,7 @@ function Get-AllMembersFromGroup {
             }
         }
         catch {
-            Write-Host $error[0].Exception.Message
+            Write-Host $error[0].Exception.Message -ForegroundColor Red
         }
     }
     end {
@@ -232,7 +232,7 @@ function Get-MyMembers {
                 return $ObjectInfo
             }
             catch {
-                Write-Host $error[0].Exception.Message
+                Write-Host $error[0].Exception.Message -ForegroundColor Red
             }
         }
         $true {
@@ -241,7 +241,7 @@ function Get-MyMembers {
                 $ObjectInfo = Get-AllMembersFromGroup -GroupName $GroupName -DomainFQDN $DomainFQDN
             }
             catch {
-                Write-Host $error[0].Exception.Message
+                Write-Host $error[0].Exception.Message -ForegroundColor Red
             }
             return $ObjectInfo 
         }
@@ -345,10 +345,10 @@ switch ($Recursive) {
     }
 }
 if ($Recursive) {
-    Write-Host ("All unique members of group: {0}" -f $DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName)
+    Write-Host ("All unique members of group: {0}, Count: {1}" -f $DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName, ($memberDNs).count) -ForegroundColor Green
 }
 else {
-    Write-Host ("Direct members of group: {0}" -f $DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName)
+    Write-Host ("Direct members of group: {0}, Count: {1}" -f $DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName, ($memberDNs).count) -ForegroundColor Green
 }
 $memberDNs
 #endregion
