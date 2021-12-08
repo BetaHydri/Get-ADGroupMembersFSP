@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.5
+1.0.6
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -149,7 +149,7 @@ function Get-AllMembersFromGroup {
                         # Adds PsCustomObject to Array
                         $ObjectInfo += $ObjectList
                         Write-Debug "Group: $AdObject.DistinguishedName"
-                        Get-AllMembersFromGroup -GroupName $AdObject.DistinguishedName -DomainName $DomainFromUserDN
+                        Get-AllMembersFromGroup -GroupName $AdObject.DistinguishedName -DomainFQDN $DomainFromUserDN
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))                
                 }
                 Elseif ($AdObject.objectClass -eq "user") {
@@ -345,10 +345,10 @@ switch ($Recursive) {
     }
 }
 if ($Recursive) {
-    Write-Host ("All unique members of group: {0}, Count: {1}" -f $DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName, ($memberDNs).count) -ForegroundColor Green
+    Write-Host ("All unique members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), ($memberDNs).count)) -ForegroundColor Green
 }
 else {
-    Write-Host ("Direct members of group: {0}, Count: {1}" -f $DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName, ($memberDNs).count) -ForegroundColor Green
+    Write-Host ("Direct members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), [int]($memberDNs).count)) -ForegroundColor Green
 }
 $memberDNs
 #endregion
