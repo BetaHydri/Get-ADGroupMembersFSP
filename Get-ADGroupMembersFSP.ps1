@@ -81,7 +81,7 @@ param(
 
 #region HelperFuntions
 function Get-Trusts {
-    [CmdletBinding()]  
+    [CmdletBinding()]
     param (
         $Domain,
         [pscredential]$Credential
