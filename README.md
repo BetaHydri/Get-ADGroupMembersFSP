@@ -2,7 +2,7 @@
 
 ### DESCRIPTION:
     Gets the group membership and its Foreign Security Principals and translate them to a NTAccount.
-```   
+```powershell
 SAMPLE1:
     Get group members of Domain Admins" in domain of server
     .\Get-ADGroupMembersFSP.ps1 -GroupName "Domain Admins"
