@@ -345,10 +345,10 @@ switch ($Recursive) {
     }
 }
 if ($Recursive) {
-    Write-Host ("All unique members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), ($memberDNs).count)) -ForegroundColor Green
+    Write-Host ("All unique members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), ($memberDNs.NTAccount).count)) -ForegroundColor Green
 }
 else {
-    Write-Host ("Direct members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), [int]($memberDNs).count)) -ForegroundColor Green
+    Write-Host ("Direct members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), [int]($memberDNs.NTAccount).count)) -ForegroundColor Green
 }
 $memberDNs
 #endregion
