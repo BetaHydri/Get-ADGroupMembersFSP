@@ -1,6 +1,5 @@
 <#
 <#PSScriptInfo
- 
 .VERSION
 1.0.7
 
@@ -31,7 +30,6 @@ Get the group membership an its Foreign Security Pricipals and translate them to
 #>
 
 <#
- 
 .DESCRIPTION
 Gets the group membership and its Foreign Security Pricipals and translate them to a NTAccount.
 .INPUTS
@@ -271,13 +269,19 @@ function Resolve-FSPs {
                 $newList += $Resolved.Value
                 Write-Debug "Resolved FSP-SID: $Resolved.Value"
                 # Check if the resolved NTAccount is a group
-                $resolvedDomain = $Resolved.Value.Split("\")[0]
+                $resolvedDomain = Get-DomainFromDN -DN $member
                 $resolvedGroupName = $Resolved.Value.Split("\")[1]
-                $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $resolvedDomain -Properties Members -ErrorAction SilentlyContinue
+                $foreignDomainFQDN = Get-DomainFromDN -DN $member
+                $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $foreignDomainFQDN -Properties Members -ErrorAction SilentlyContinue
                 if ($resolvedGroup) {
-                    $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $resolvedDomain
+                    $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $foreignDomainFQDN
                     $newList += $nestedMembers.NTAccount
                 }
+            }
+            catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
+                Write-Debug "ADIdentityNotFoundException: $($_.Exception.Message)"
+                # Handle the exception by adding a placeholder
+                $newList += "Unresolved FSP-SID: $member"
             }
             catch {
                 # If SID can't be translated add at least FSB DN to new array with a placeholder
@@ -286,9 +290,9 @@ function Resolve-FSPs {
                 # Try to use the resolved NTAccount to connect to the trusted AD domain with the provided credentials
                 if ($Credential) {
                     try {
-                        $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $resolvedDomain -Credential $Credential -Properties Members -ErrorAction SilentlyContinue
+                        $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $foreignDomainFQDN -Credential $Credential -Properties Members -ErrorAction SilentlyContinue
                         if ($resolvedGroup) {
-                            $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $resolvedDomain
+                            $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $foreignDomainFQDN
                             $newList += $nestedMembers.NTAccount
                         }
                     }
@@ -300,9 +304,9 @@ function Resolve-FSPs {
                     # Prompt for credentials if not provided
                     $Credential = Get-Credential -Message "Enter credentials for trusted AD domain: $resolvedDomain"
                     try {
-                        $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $resolvedDomain -Credential $Credential -Properties Members -ErrorAction SilentlyContinue
+                        $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $foreignDomainFQDN -Credential $Credential -Properties Members -ErrorAction SilentlyContinue
                         if ($resolvedGroup) {
-                            $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $resolvedDomain
+                            $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $foreignDomainFQDN
                             $newList += $nestedMembers.NTAccount
                         }
                     }
@@ -311,7 +315,7 @@ function Resolve-FSPs {
                     }
                 }
                 # Use LDAP queries to connect to the foreign domain of the group members in the trusted domains
-                $ldapConnection = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$resolvedDomain", $Credential.UserName, $Credential.GetNetworkCredential().Password)
+                $ldapConnection = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$foreignDomainFQDN", $Credential.UserName, $Credential.GetNetworkCredential().Password)
                 $searcher = New-Object System.DirectoryServices.DirectorySearcher($ldapConnection)
                 $searcher.Filter = "(objectClass=group)"
                 $searcher.PropertiesToLoad.Add("member") | Out-Null
