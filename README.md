@@ -22,6 +22,10 @@ SAMPLE4:
 SAMPLE5:
     #Get group members of "My Group" in Domain corp.contoso.com recursively but authenticate as corp\myuser
     .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -DomainName corp.contoso.com -UserName corp\myuser -Recursive
+
+SAMPLE6:
+    #Get group members of "My Group" in Domain corp.contoso.com recursively, authenticate as corp\myuser, and resolve foreignSecurityPrincipals
+    .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -DomainName corp.contoso.com -UserName corp\myuser -Recursive -ResolveFSPs
 ```
     
 OUTPUT as [PsCustomObject]:
