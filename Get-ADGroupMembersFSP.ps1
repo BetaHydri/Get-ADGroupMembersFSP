@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.8
+1.0.9
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -147,14 +147,21 @@ function Get-AllMembersFromGroup {
                 }
                 Elseif ($AdObject.objectClass -eq "user") {
                     do {
-                        # Adds PsCustomObject to Arra
+                        # Adds PsCustomObject to Array
                         $ObjectInfo += $ObjectList
                         Write-Debug "User: $AdObject.DistinguishedName"
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))
                 }
+                Elseif ($AdObject.objectClass -eq "foreignSecurityPrincipal") {
+                    do {
+                        # Adds PsCustomObject to Array
+                        $ObjectInfo += $ObjectList
+                        Write-Debug "FSP: $AdObject.DistinguishedName"
+                    } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))
+                }
                 Else {
                     do {
-                        # Adds PsCustomObject to Arra
+                        # Adds PsCustomObject to Array
                         $ObjectInfo += $ObjectList
                         Write-Debug "Others: $AdObject.DistinguishedName"
                     } while (-Not($ObjectList.DistinguishedName.Contains($AdObject.DistinguishedName)))                    
@@ -355,4 +362,14 @@ $memberDNs
 # Fix for index out of bounds error
 if ($memberDNs.Count -ne $membersNTAccounts.Count) {
     Write-Host "Warning: The number of members and NT accounts do not match." -ForegroundColor Yellow
+}
+
+# Ensure the counts match before merging
+if ($memberDNs.Count -eq $membersNTAccounts.Count) {
+    for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
+        $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
+    }
+}
+else {
+    Write-Host "Error: Mismatch in counts of members and NT accounts." -ForegroundColor Red
 }
