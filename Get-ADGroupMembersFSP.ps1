@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.6
+1.0.7
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -144,7 +144,7 @@ function Get-AllMembersFromGroup {
                     DistinguishedName = $memberDN
                     ObjectClass       = $AdObject.ObjectClass
                 }
-                If ($AdObject.objectClass -eq "group") {
+                If ($AdObject.objectClass -eq "group" -or $AdObject.objectClass -eq "foreignsecurityprincipal") {
                     do {
                         # Adds PsCustomObject to Array
                         $ObjectInfo += $ObjectList
@@ -255,7 +255,7 @@ function Resolve-FSPs {
     )
     $newList = @()
     foreach ($member in $GroupMembers) {
-        if ($member -like "*ForeignSecurityPrincipals*" ) {
+        if ($member -like "*ForeignSecurityPrincipals*") {
             # Extract SID from foreign security principal DN
             if ($member -like "*ACNF:*") {
                 # CNF stands for conflict, you should check your AD.
@@ -270,11 +270,62 @@ function Resolve-FSPs {
                 $Resolved = $SID.Translate([System.Security.Principal.NTAccount])
                 $newList += $Resolved.Value
                 Write-Debug "Resolved FSP-SID: $Resolved.Value"
+                # Check if the resolved NTAccount is a group
+                $resolvedDomain = $Resolved.Value.Split("\")[0]
+                $resolvedGroupName = $Resolved.Value.Split("\")[1]
+                $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $resolvedDomain -Properties Members -ErrorAction SilentlyContinue
+                if ($resolvedGroup) {
+                    $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $resolvedDomain
+                    $newList += $nestedMembers.NTAccount
+                }
             }
             catch {
-                # If SID can't be translated add at least FSB DN to new array
-                $newList += $member
+                # If SID can't be translated add at least FSB DN to new array with a placeholder
+                $newList += "Unresolved FSP-SID: $member"
                 Write-Debug "Unresolved FSP-SID: $member"
+                # Try to use the resolved NTAccount to connect to the trusted AD domain with the provided credentials
+                if ($Credential) {
+                    try {
+                        $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $resolvedDomain -Credential $Credential -Properties Members -ErrorAction SilentlyContinue
+                        if ($resolvedGroup) {
+                            $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $resolvedDomain
+                            $newList += $nestedMembers.NTAccount
+                        }
+                    }
+                    catch {
+                        Write-Debug "Failed to connect to trusted AD domain with provided credentials"
+                    }
+                }
+                else {
+                    # Prompt for credentials if not provided
+                    $Credential = Get-Credential -Message "Enter credentials for trusted AD domain: $resolvedDomain"
+                    try {
+                        $resolvedGroup = Get-ADGroup -Identity $resolvedGroupName -Server $resolvedDomain -Credential $Credential -Properties Members -ErrorAction SilentlyContinue
+                        if ($resolvedGroup) {
+                            $nestedMembers = Get-AllMembersFromGroup -GroupName $resolvedGroupName -DomainFQDN $resolvedDomain
+                            $newList += $nestedMembers.NTAccount
+                        }
+                    }
+                    catch {
+                        Write-Debug "Failed to connect to trusted AD domain with provided credentials"
+                    }
+                }
+                # Use LDAP queries to connect to the foreign domain of the group members in the trusted domains
+                $ldapConnection = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$resolvedDomain", $Credential.UserName, $Credential.GetNetworkCredential().Password)
+                $searcher = New-Object System.DirectoryServices.DirectorySearcher($ldapConnection)
+                $searcher.Filter = "(objectClass=group)"
+                $searcher.PropertiesToLoad.Add("member") | Out-Null
+                $result = $searcher.FindOne()
+                if ($result) {
+                    $nestedMembers = $result.Properties["member"]
+                    foreach ($nestedMember in $nestedMembers) {
+                        $newList += $nestedMember
+                    }
+                }
+            }
+            # Ensure NTAccount is always included in the output
+            if (-not $newList.Contains($Resolved.Value)) {
+                $newList += $Resolved.Value
             }
         }
         else {
@@ -312,16 +363,19 @@ switch ($Recursive) {
             $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
         }
         # Merge the two Objects to one
-        If (($memberDNs).count -gt 1) {
+        If (($memberDNs).count -eq $membersNTAccounts.Count) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
                 $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
             }
         }
-        # Merge the two Objects to one, when only one member exists in group
         else {
-            $memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
-        }   
-
+            Write-Debug "Mismatch in the number of elements between memberDNs and membersNTAccounts" 
+            # Ensure NTAccount is always included in the output
+            for ($i = 0; $i -lt $memberDNs.Count; $i++) {
+                $ntAccount = if ($i -lt $membersNTAccounts.Count) { $membersNTAccounts.Item($i) } else { "Unresolved NTAccount" }
+                $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value $ntAccount
+            }
+        }
     }
     $true {
         if ($UserName) {
@@ -333,15 +387,19 @@ switch ($Recursive) {
             $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName            
         }
         # Merge the two Objects to one
-        If (($memberDNs).count -gt 1) {
+        If (($memberDNs).count -eq $membersNTAccounts.Count) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
                 $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
             }
         }
-        # Merge the two Objects to one, when only one member exists in group
         else {
-            $memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
-        }   
+            Write-Debug "Mismatch in the number of elements between memberDNs and membersNTAccounts"
+            # Ensure NTAccount is always included in the output
+            for ($i = 0; $i -lt $memberDNs.Count; $i++) {
+                $ntAccount = if ($i -lt $membersNTAccounts.Count) { $membersNTAccounts.Item($i) } else { "Unresolved NTAccount" }
+                $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value $ntAccount
+            }
+        }
     }
 }
 if ($Recursive) {
