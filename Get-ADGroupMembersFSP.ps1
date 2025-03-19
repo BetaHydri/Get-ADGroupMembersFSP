@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.9
+1.0.8
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -250,6 +250,23 @@ function Get-GroupMembersFromTrustedDomain {
     return $members
 }
 
+function Get-ADDomainInfo {
+    param (
+        [string]$NetBIOSDomainName,
+        [PSCredential]$Credentials
+    )
+
+    # Import the Active Directory module
+    Import-Module ActiveDirectory
+
+    # Get domain information using the NetBIOS domain name
+    $domainInfo = Get-ADDomain -Identity $NetBIOSDomainName -Credential $Credentials
+
+    # Output the FQDN and other relevant information
+    return $domainInfo
+}
+
+
 function Resolve-FSPs {
     [CmdletBinding()]
     param (
@@ -258,7 +275,7 @@ function Resolve-FSPs {
     )
     $newList = @()
     foreach ($member in $GroupMembers) {
-        if ($member -like "*ForeignSecurityPrincipals*" ) {
+        if ($member -like "*CN=ForeignSecurityPrincipals*" ) {
             # Extract SID from foreign security principal DN
             if ($member -like "*ACNF:*") {
                 # CNF stands for conflict, you should check your AD.
@@ -275,13 +292,13 @@ function Resolve-FSPs {
                 Write-Debug "Resolved FSP-SID: $Resolved.Value"
 
                 # Construct Domain FQDN from NTAccount
-                $domainFQDN = Get-DomainFQDNFromNTAccount -NTAccount $Resolved.Value
-
+                $domainNetbios = Get-DomainFQDNFromNTAccount -NTAccount $Resolved.Value
+                $cred = Get-Credential -Message "Authenticate with credentials of domain $domainNetbios" -UserName $domainNetbios
+                $domainFQDN = (Get-ADDomainInfo  -NetBIOSDomainName $domainNetbios -credentials $cred).dnsroot
                 # Check if the principal is a group and enumerate members if it is
-                $principalObject = Get-ADObject -Identity $Resolved.Value -Server $domainFQDN
+                $principalObject = Get-ADObject -LDAPFilter "cn=$(($Resolved.Value).split('\')[1])" -Credential $cred -Server $domainFQDN
                 if ($principalObject.ObjectClass -eq "group") {
-                    $Credential = Get-Credential -Message "Enter credentials for trusted domain $domainFQDN"
-                    $groupMembers = Get-GroupMembersFromTrustedDomain -GroupDN $principalObject.DistinguishedName -DomainFQDN $domainFQDN -Credential $Credential
+                    $groupMembers = Get-GroupMembersFromTrustedDomain -GroupDN $principalObject.DistinguishedName -DomainFQDN $domainFQDN -Credential $Cred
                     $newList += Resolve-FSPs -GroupMembers $groupMembers.DistinguishedName
                 }
             }
