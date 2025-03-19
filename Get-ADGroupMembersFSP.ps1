@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.6
+1.0.8
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -186,21 +186,21 @@ function Get-MyMembers {
             HelpMessage = "Enter DomainFQDN to get group members from")]
         [ValidateNotNullOrEmpty()]
         [string]$DomainFQDN,
-        
-        [Parameter(Mandatory = $false)]
+
+                [Parameter(Mandatory = $false)]
         [switch]$Recursive = $false
     )
     switch ($Recursive) {
         $false { 
             $ObjectInfo = @()
             try {
-                $myMemberList = (Get-ADGroup $GroupName -Server $DomainFQDN -Properties Members).Members
-                foreach ($memberDN in $myMemberList) {
+                                    $myMemberList = (Get-ADGroup $GroupName -Server $DomainFQDN -Properties Members).Members
+                                foreach ($memberDN in $myMemberList) {
                     # From UserDN make Domain FQDN
                     $DomainFromUserDN = Get-DomainFromDN -DN $memberDN
                     # Check if DN Object is a group or other type
-                    $AdObject = (Get-ADObject $memberDN -Server $DomainFromUserDN -Properties DistinguishedName, ObjectClass, Name)
-                    $ObjectList = [PSCustomObject][ordered]@{
+                                            $AdObject = (Get-ADObject $memberDN -Server $DomainFromUserDN -Properties DistinguishedName, ObjectClass, Name)
+                                        $ObjectList = [PSCustomObject][ordered]@{
                         DistinguishedName = $memberDN
                         ObjectClass       = $AdObject.ObjectClass
                     }
@@ -225,6 +225,24 @@ function Get-MyMembers {
     }
     
 }
+function Get-DomainFQDNFromNTAccount {
+    param (
+        [string]$NTAccount
+    )
+    $domain = $NTAccount.Split('\')[0]
+    return $domain
+}
+
+function Get-GroupMembersFromTrustedDomain {
+    param (
+        [string]$GroupDN,
+        [string]$DomainFQDN,
+        [pscredential]$Credential
+    )
+    $members = Get-ADGroupMember -Identity $GroupDN -Server $DomainFQDN -Credential $Credential
+    return $members
+}
+
 function Resolve-FSPs {
     [CmdletBinding()]
     param (
@@ -248,10 +266,21 @@ function Resolve-FSPs {
                 $Resolved = $SID.Translate([System.Security.Principal.NTAccount])
                 $newList += $Resolved.Value
                 Write-Debug "Resolved FSP-SID: $Resolved.Value"
+
+                # Construct Domain FQDN from NTAccount
+                $domainFQDN = Get-DomainFQDNFromNTAccount -NTAccount $Resolved.Value
+
+                # Check if the principal is a group and enumerate members if it is
+                $principalObject = Get-ADObject -Identity $Resolved.Value -Server $domainFQDN
+                if ($principalObject.ObjectClass -eq "group") {
+                    $Credential = Get-Credential -Message "Enter credentials for trusted domain $domainFQDN"
+                    $groupMembers = Get-GroupMembersFromTrustedDomain -GroupDN $principalObject.DistinguishedName -DomainFQDN $domainFQDN -Credential $Credential
+                    $newList += Resolve-FSPs -GroupMembers $groupMembers.DistinguishedName
+                }
             }
             catch {
                 # If SID can't be translated add at least FSB DN to new array
-                $newList += $member
+                $newList += "Unresolved FSP-SID: $member"
                 Write-Debug "Unresolved FSP-SID: $member"
             }
         }
@@ -260,8 +289,14 @@ function Resolve-FSPs {
             $domain = Get-DomainFromDN -DN $member
             # Get domain\user (aka msDS-PrincipalName) from ADUser DN
             $principalName = (Get-ADObject $member -Server $domain -Properties msDS-PrincipalName)."msDS-PrincipalName" 
-            $newList += $principalName
-            Write-Debug "Normal Account: $principalName"
+            if ($principalName) {
+                $newList += $principalName
+                Write-Debug "Normal Account: $principalName"
+            }
+            else {
+                $newList += "Unresolved Account: $member"
+                Write-Debug "Unresolved Account: $member"
+            }
         }
     }
     return $newList
@@ -316,3 +351,8 @@ else {
 }
 $memberDNs
 #endregion
+
+# Fix for index out of bounds error
+if ($memberDNs.Count -ne $membersNTAccounts.Count) {
+    Write-Host "Warning: The number of members and NT accounts do not match." -ForegroundColor Yellow
+}
