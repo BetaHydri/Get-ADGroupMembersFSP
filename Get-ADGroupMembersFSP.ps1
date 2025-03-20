@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-2.0.0
+2.0.1
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -13,13 +13,13 @@ Jan Tiedemann
 .COMPANYNAME
 Microsoft
 
-.COPYRIGHT November 2021
+.COPYRIGHT March 2025
 
 .TAGS
 ADGroup Groupmembers ActiveDirectory Groups Members FSP
 
 .DESCRIPTION
-Get the group membership an its Foreign Security Pricipals and translate them to a NTAccount.
+Get the group membership an its Foreign Security Pricipals and translate them to a NTAccount, recursively or not.
 
 .EXTERNALMODULEDEPENDENCIES
 
@@ -324,7 +324,7 @@ function Resolve-FSPs {
                 }
             }
             catch {
-                # If SID can't be translated add at least FSB DN to new array
+                # If SID can't be translated add at least a placeholder text to the list
                 $newList += "Unresolved FSP-SID"
                 Write-Debug "Unresolved FSP-SID: $member"
             }
@@ -344,6 +344,7 @@ function Resolve-FSPs {
                 Write-Debug "Normal Account: $principalName"
             }
             else {
+                # If msDS-PrincipalName can't be retrieved add at least a placeholder text to the list
                 $newList += "Unresolved Account"
                 Write-Debug "Unresolved Account: $member"
             }
@@ -368,13 +369,13 @@ switch ($Recursive) {
     $false {
         $global:memberDNs = Get-MyMembers -GroupName $GroupName -DomainFQDN $DomainName
         $membersNTAccounts = Resolve-FSPs -GroupMembers ($global:memberDNs).DistinguishedName
-        # Merge the two Objects to one
+        # Merge the two Objects to one, add NTAccount to each member
         If (($memberDNs).count -gt 1) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
                 $global:memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
             }
         }
-        # Merge the two Objects to one, when only one member exists in group
+        # Merge the two Objects to one, when only one member exists in group, add NTAccount to each member
         else {
             $global:memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
         }   
