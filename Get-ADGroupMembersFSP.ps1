@@ -311,7 +311,7 @@ function Resolve-FSPs {
                 # Construct Domain FQDN from NTAccount
                 if ($Recursive) {
 `	                $domainNetbios = Get-DomainFQDNFromNTAccount -NTAccount $Resolved.Value
-                    $cred = Get-Credential -Message "Enter credentials of foreign trusted AD domain $domainNetbios\username"
+                    $cred = Get-Credential -Message "Enter credentials for trusted domain $domainNetbios\<username>"
                     $domainFQDN = (Get-ADDomainInfo  -NetBIOSDomainName $domainNetbios -credentials $cred).dnsroot
                     # Check if the principal is a group and enumerate members if it is
                     $principalObject = Get-ADObject -LDAPFilter "cn=$(($Resolved.Value).split('\')[1])" -Credential $cred -Server $domainFQDN
