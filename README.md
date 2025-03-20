@@ -2,7 +2,11 @@
 
 ### DESCRIPTION:
 ```
-Gets the group memberships of a AD Group in the actual DNS Computer AD Domain. When a member is a Foreign Security Principal then translate them to a NTAccount. Furthermore ifRecursion has been defined, then follow the nested membership of the Foreign SecurityPrincipal if this has been indentified as ObjectClass group. Credentials will be asked forevery member that is a Foreign Security Principal in the trusted domain.
+Gets the group memberships of a AD Group in the actual DNS Computer AD Domain. When a member
+is a Foreign Security Principal then translate them to a NTAccount. Furthermore ifRecursion
+has been defined, then follow the nested membership of the Foreign SecurityPrincipal if this
+has been indentified as ObjectClass group. Credentials will be asked forevery member that is a
+Foreign Security Principal in the trusted domain.
 ```
 ```powershell
 SAMPLE1:
