@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.8
+2.0.0
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -316,16 +316,18 @@ function Resolve-FSPs {
                 Write-Debug "Resolved FSP-SID: $Resolved.Value"
 
                 # Construct Domain FQDN from NTAccount
-                $domainNetbios = Get-DomainFQDNFromNTAccount -NTAccount $Resolved.Value
-                $cred = Get-Credential -Message "Enter credentials of foreign trusted AD domain $domainNetbios\username"
-                $domainFQDN = (Get-ADDomainInfo  -NetBIOSDomainName $domainNetbios -credentials $cred).dnsroot
-                # Check if the principal is a group and enumerate members if it is
-                $principalObject = Get-ADObject -LDAPFilter "cn=$(($Resolved.Value).split('\')[1])" -Credential $cred -Server $domainFQDN
-                if ($principalObject.ObjectClass -eq "group") {
-                    #$groupMembers = Get-GroupMembersFromTrustedDomain -GroupDN $principalObject.DistinguishedName -DomainFQDN $domainFQDN -Credential $Cred
-                    $groupMembers = Get-MyMembers -GroupName "$(($Resolved.Value).split('\')[1])" -DomainFQDN $domainFQDN -Recursive
-                    $global:memberDNs += $groupMembers
-                    $newList += Resolve-FSPs -GroupMembers $groupMembers.DistinguishedName
+                if ($Recursive) {
+`	                $domainNetbios = Get-DomainFQDNFromNTAccount -NTAccount $Resolved.Value
+                    $cred = Get-Credential -Message "Enter credentials of foreign trusted AD domain $domainNetbios\username"
+                    $domainFQDN = (Get-ADDomainInfo  -NetBIOSDomainName $domainNetbios -credentials $cred).dnsroot
+                    # Check if the principal is a group and enumerate members if it is
+                    $principalObject = Get-ADObject -LDAPFilter "cn=$(($Resolved.Value).split('\')[1])" -Credential $cred -Server $domainFQDN
+                    if ($principalObject.ObjectClass -eq "group") {
+                        #$groupMembers = Get-GroupMembersFromTrustedDomain -GroupDN $principalObject.DistinguishedName -DomainFQDN $domainFQDN -Credential $Cred
+                        $groupMembers = Get-MyMembers -GroupName "$(($Resolved.Value).split('\')[1])" -DomainFQDN $domainFQDN -Recursive
+                        $global:memberDNs += $groupMembers
+                        $newList += Resolve-FSPs -GroupMembers $groupMembers.DistinguishedName
+                    }
                 }
             }
             catch {
@@ -406,3 +408,4 @@ else {
 }
 $global:memberDNs
 #endregion
+
