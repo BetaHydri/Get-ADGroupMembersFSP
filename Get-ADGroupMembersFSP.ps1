@@ -361,7 +361,7 @@ Catch {
     Write-Host "ActiveDirectory Module couldn't be loaded"
     break
 }
-$global:memberDNs = @()
+[object[]]$global:memberDNs = @()
 $membersNTAccounts = @()
 [String]$DomainName = [System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1]
 switch ($Recursive) {
@@ -402,4 +402,3 @@ else {
 }
 $global:memberDNs
 #endregion
-
