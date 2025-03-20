@@ -1,7 +1,8 @@
 # Get-ADGroupMembersFSP
 
 ### DESCRIPTION:
-    Gets the group memberships and when found its Foreign Security Principals and translate them to a NTAccount.
+    Gets the group memberships of a AD Group in the actual DNS Computer AD Domain. When a  member is a Foreign Security Principal then translate them to a NTAccount. Furthermore if Recursion has been defined, then follow the nested membership of the Foreign Security Principal if this has been indentified as ObjectClass group. Credentials will be asked for every member that is a Foreign Security Principal in the trusted domain.
+
 ```powershell
 SAMPLE1:
     #Get group members of Domain Admins" in the actual domain of client
@@ -10,8 +11,6 @@ SAMPLE1:
 SAMPLE2:
     #Get group members of "My Group" in the actual Domain of client recursively 
     .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -Recursive
-
-
 
 ```
     
