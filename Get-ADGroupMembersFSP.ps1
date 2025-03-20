@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-1.0.8
+1.0.9
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce
@@ -127,12 +127,22 @@ function Get-AllMembersFromGroup {
     process {
         try {
             # Array of group members
-            $MemberList = ((Get-ADGroup -Identity $GroupName -Server $DomainFQDN -Properties Members).Members) 
+            if ($cred) {
+                $MemberList = ((Get-ADGroup -Identity $GroupName -Server $DomainFQDN -Credential $cred -Properties Members).Members) 
+            }
+            else {
+                $MemberList = ((Get-ADGroup -Identity $GroupName -Server $DomainFQDN -Properties Members).Members) 
+            }
             foreach ($memberDN in $MemberList) {
                 # From UserDN make Domain FQDN
                 $DomainFromUserDN = Get-DomainFromDN -DN $memberDN
                 # Check if DN Object is a group or other type
-                $AdObject = (Get-ADObject $memberDN -Server $DomainFromUserDN -Properties DistinguishedName, ObjectClass, Name)
+                if ($cred) {
+                    $AdObject = (Get-ADObject $memberDN -Server $DomainFromUserDN -Credential $cred -Properties DistinguishedName, ObjectClass, Name)
+                }
+                else {
+                    $AdObject = (Get-ADObject $memberDN -Server $DomainFromUserDN -Properties DistinguishedName, ObjectClass, Name)
+                }
                 $ObjectList = [PSCustomObject][ordered]@{
                     DistinguishedName = $memberDN
                     ObjectClass       = $AdObject.ObjectClass
@@ -201,13 +211,23 @@ function Get-MyMembers {
         $false { 
             $ObjectInfo = @()
             try {
-                                    $myMemberList = (Get-ADGroup $GroupName -Server $DomainFQDN -Properties Members).Members
-                                foreach ($memberDN in $myMemberList) {
+                if ($cred) {
+                    $myMemberList = (Get-ADGroup $GroupName -Server $DomainFQDN -Credential $cred -Properties Members).Members
+                }
+                else{
+                    $myMemberList = (Get-ADGroup $GroupName -Server $DomainFQDN -Properties Members).Members
+                }
+                foreach ($memberDN in $myMemberList) {
                     # From UserDN make Domain FQDN
                     $DomainFromUserDN = Get-DomainFromDN -DN $memberDN
                     # Check if DN Object is a group or other type
-                                            $AdObject = (Get-ADObject $memberDN -Server $DomainFromUserDN -Properties DistinguishedName, ObjectClass, Name)
-                                        $ObjectList = [PSCustomObject][ordered]@{
+                    if ($cred) {
+                        $AdObject = (Get-ADObject $memberDN -Server $DomainFromUserDN -Credential $cred -Properties DistinguishedName, ObjectClass, Name)
+                    }
+                    else {
+                        $AdObject = (Get-ADObject $memberDN -Server $DomainFromUserDN -Properties DistinguishedName, ObjectClass, Name)
+                    }
+                    $ObjectList = [PSCustomObject][ordered]@{
                         DistinguishedName = $memberDN
                         ObjectClass       = $AdObject.ObjectClass
                     }
@@ -275,6 +295,10 @@ function Resolve-FSPs {
     )
     $newList = @()
     foreach ($member in $GroupMembers) {
+        $checkdomain = Get-DomainFromDN -DN $member
+        if ($checkdomain -eq $DomainName) {
+            $cred = $null
+        }
         if ($member -like "*CN=ForeignSecurityPrincipals*" ) {
             # Extract SID from foreign security principal DN
             if ($member -like "*ACNF:*") {
@@ -298,7 +322,9 @@ function Resolve-FSPs {
                 # Check if the principal is a group and enumerate members if it is
                 $principalObject = Get-ADObject -LDAPFilter "cn=$(($Resolved.Value).split('\')[1])" -Credential $cred -Server $domainFQDN
                 if ($principalObject.ObjectClass -eq "group") {
-                    $groupMembers = Get-GroupMembersFromTrustedDomain -GroupDN $principalObject.DistinguishedName -DomainFQDN $domainFQDN -Credential $Cred
+                    #$groupMembers = Get-GroupMembersFromTrustedDomain -GroupDN $principalObject.DistinguishedName -DomainFQDN $domainFQDN -Credential $Cred
+                    $groupMembers = Get-MyMembers -GroupName "$(($Resolved.Value).split('\')[1])" -DomainFQDN $domainFQDN -Recursive
+                    $global:memberDNs += $groupMembers
                     $newList += Resolve-FSPs -GroupMembers $groupMembers.DistinguishedName
                 }
             }
@@ -312,7 +338,12 @@ function Resolve-FSPs {
             # From UserDN make Domain FQDN
             $domain = Get-DomainFromDN -DN $member
             # Get domain\user (aka msDS-PrincipalName) from ADUser DN
-            $principalName = (Get-ADObject $member -Server $domain -Properties msDS-PrincipalName)."msDS-PrincipalName" 
+            if ($cred) {
+                $principalName = (Get-ADObject $member -Server $domain -Credential $cred -Properties msDS-PrincipalName)."msDS-PrincipalName" 
+            }
+            else {
+                $principalName = (Get-ADObject $member -Server $domain -Properties msDS-PrincipalName)."msDS-PrincipalName" 
+            }
             if ($principalName) {
                 $newList += $principalName
                 Write-Debug "Normal Account: $principalName"
@@ -335,35 +366,35 @@ Catch {
     Write-Host "ActiveDirectory Module couldn't be loaded"
     break
 }
-$memberDNs = @()
+$global:memberDNs = @()
 $membersNTAccounts = @()
 switch ($Recursive) {
     $false {
-        $memberDNs = Get-MyMembers -GroupName $GroupName -DomainFQDN $DomainName
-        $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
+        $global:memberDNs = Get-MyMembers -GroupName $GroupName -DomainFQDN $DomainName
+        $membersNTAccounts = Resolve-FSPs -GroupMembers ($global:memberDNs).DistinguishedName
         # Merge the two Objects to one
         If (($memberDNs).count -gt 1) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
-                $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
+                $global:memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
             }
         }
         # Merge the two Objects to one, when only one member exists in group
         else {
-            $memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
+            $global:memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
         }   
     }
     $true {
-        $memberDNs = Get-MyMembers -GroupName $GroupName -DomainFQDN $DomainName -Recursive
-        $membersNTAccounts = Resolve-FSPs -GroupMembers ($memberDNs).DistinguishedName
+        $global:memberDNs = Get-MyMembers -GroupName $GroupName -DomainFQDN $DomainName -Recursive
+        $membersNTAccounts = Resolve-FSPs -GroupMembers ($global:memberDNs).DistinguishedName
         # Merge the two Objects to one
-        If (($memberDNs).count -gt 1) {
+        If (($global:memberDNs).count -gt 1) {
             for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
-                $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
+                $global:memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
             }
         }
         # Merge the two Objects to one, when only one member exists in group
         else {
-            $memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
+            $global:memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
         }   
     }
 }
@@ -373,20 +404,6 @@ if ($Recursive) {
 else {
     Write-Host ("Direct members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), [int]($memberDNs.NTAccount).count)) -ForegroundColor Green
 }
-$memberDNs
+$global:memberDNs
 #endregion
 
-# Fix for index out of bounds error
-if ($memberDNs.Count -ne $membersNTAccounts.Count) {
-    Write-Host "Warning: The number of members and NT accounts do not match." -ForegroundColor Yellow
-}
-
-# Ensure the counts match before merging
-if ($memberDNs.Count -eq $membersNTAccounts.Count) {
-    for ($i = 0; $i -lt $membersNTAccounts.Count; $i++) {
-        $memberDNs.Item($i) | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts.Item($i)))
-    }
-}
-else {
-    Write-Host "Error: Mismatch in counts of members and NT accounts." -ForegroundColor Red
-}
