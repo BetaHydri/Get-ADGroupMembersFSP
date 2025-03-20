@@ -3,7 +3,7 @@
 ### DESCRIPTION:
 ```
 Gets the group memberships of an AD Group in the actual DNS computers AD Domain. 
-When a member of this provided group from ObejctClass ForeignSecurityPrincipal then translate
+When a member of the provided group is from ObejctClass ForeignSecurityPrincipal then translate
 it to a NTAccount. Furthermore if Recursion switch has been defined, then follow the nested
 memberships of the ForeignSecurityPrincipal, if this Object has been indentified as ObjectClass group. Credentials will be asked for every member that is a
 ForeignSecurityPrincipal in the trusted domain.
