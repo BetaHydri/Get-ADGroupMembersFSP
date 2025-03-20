@@ -325,7 +325,7 @@ function Resolve-FSPs {
             }
             catch {
                 # If SID can't be translated add at least FSB DN to new array
-                $newList += "Unresolved FSP-SID: $member"
+                $newList += "Unresolved FSP-SID"
                 Write-Debug "Unresolved FSP-SID: $member"
             }
         }
@@ -344,7 +344,7 @@ function Resolve-FSPs {
                 Write-Debug "Normal Account: $principalName"
             }
             else {
-                $newList += "Unresolved Account: $member"
+                $newList += "Unresolved Account"
                 Write-Debug "Unresolved Account: $member"
             }
         }
@@ -402,3 +402,5 @@ else {
 }
 $global:memberDNs
 #endregion
+
+# End of script
