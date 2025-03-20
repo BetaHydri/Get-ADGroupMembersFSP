@@ -61,13 +61,6 @@ param(
     
     [Parameter(Mandatory = $false,
         Position = 1,
-        ValueFromPipelineByPropertyName = $false,
-        HelpMessage = "Enter DomainFQDN from initial Group")]
-    [ValidateNotNullOrEmpty()]
-    [String]$DomainName = [System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1],    
-    
-    [Parameter(Mandatory = $false,
-        Position = 2,
         HelpMessage = "Enter GroupName to get members from")]
     [Switch]$Recursive = $false
 )
@@ -370,6 +363,7 @@ Catch {
 }
 $global:memberDNs = @()
 $membersNTAccounts = @()
+[String]$DomainName = [System.Net.Dns]::GetHostEntry($env:computername).HostName.Split(".", 2)[1]
 switch ($Recursive) {
     $false {
         $global:memberDNs = Get-MyMembers -GroupName $GroupName -DomainFQDN $DomainName
