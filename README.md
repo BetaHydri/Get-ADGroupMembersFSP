@@ -17,8 +17,15 @@ SAMPLE2:
     #Get group members of "My Group" in the actual Domain of client recursively 
     .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -Recursive
 
+SAMPLE3:
+    #Get group members of "My Group" in the actual Domain of client and export to CSV
+    .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -OutputCsvFile "C:\path\to\output.csv"
+
+SAMPLE4:
+    #Get group members of "My Group" in the actual Domain of client and export to CSV with custom delimiter
+    .\Get-ADGroupMembersFSP.ps1 -GroupName "MY Group" -OutputCsvFile "C:\path\to\output.csv" -CsvDelimiter ";"
 ```
-    
+
 OUTPUT as [PsCustomObject]:
 |DistinguishedName                                                              | ObjectClass    | NTAccount
 :-------------------------------------------------------------------------------|:---------------|:-------------------------------
@@ -27,3 +34,7 @@ CN=Exchange Domain Servers,CN=Users,DC=africa,DC=contoso,DC=com                 
 CN=Exchange Domain Servers,CN=Users,DC=redmond,DC=contoso,DC=com                | group          | REDMOND\Exchange Domain Servers
 CN=S-1-5-11\0ACNF:df5167ba-e8fb-4de2-958d-720652128486,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com | foreignSecurityPrincipal | NT AUTHORITY\Authenticated Users
 CN=S-1-1-0,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com             | foreignSecurityPrincipal | Everyone
+
+### ADDITIONAL OUTPUT:
+Initial Group Name: [GroupName]
+Sum of Nested Members: [Count]
