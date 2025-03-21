@@ -62,7 +62,15 @@ param(
     [Parameter(Mandatory = $false,
         Position = 1,
         HelpMessage = "Enter GroupName to get members from")]
-    [Switch]$Recursive = $false
+    [Switch]$Recursive = $false,
+
+    # Add a parameter to specify the output file for CSV export
+    [Parameter(Mandatory = $false, HelpMessage = "Specify the output CSV file path")]
+    [String]$OutputCsvFile,
+
+    # Add a parameter to specify the delimiter for CSV export
+    [Parameter(Mandatory = $false, HelpMessage = "Specify the delimiter for the CSV file")]
+    [String]$CsvDelimiter = ","
 )
 
 #region HelperFuntions
@@ -378,7 +386,7 @@ switch ($Recursive) {
         # Merge the two Objects to one, when only one member exists in group, add NTAccount to each member
         else {
             $global:memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
-        }   
+        }
     }
     $true {
         $global:memberDNs = Get-MyMembers -GroupName $GroupName -DomainFQDN $DomainName -Recursive
@@ -392,15 +400,22 @@ switch ($Recursive) {
         # Merge the two Objects to one, when only one member exists in group
         else {
             $global:memberDNs | Add-Member -MemberType NoteProperty -Name 'NTAccount' -Value ($($membersNTAccounts))
-        }   
+        }
     }
 }
-if ($Recursive) {
-    Write-Host ("All unique members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), ($memberDNs.NTAccount).count)) -ForegroundColor Green
+
+# Display the initial GroupName and the sum of the nested members
+$initialGroupName = $GroupName
+$nestedMembersCount = ($global:memberDNs).Count
+Write-Host "Initial Group Name: $initialGroupName" -ForegroundColor Yellow
+Write-Host "Sum of Nested Members: $nestedMembersCount" -ForegroundColor Yellow
+
+# Export the results to CSV if the OutputCsvFile parameter is provided
+if ($OutputCsvFile) {
+    $global:memberDNs | Export-Csv -Path $OutputCsvFile -NoTypeInformation -Delimiter $CsvDelimiter
+    Write-Host "Results exported to $OutputCsvFile with delimiter '$CsvDelimiter'" -ForegroundColor Green
 }
-else {
-    Write-Host ("Direct members of group: {0}, Count: {1}" -f (($DomainName.split(".", 2)[0].ToUpper() + "\" + $GroupName), [int]($memberDNs.NTAccount).count)) -ForegroundColor Green
-}
+
 $global:memberDNs
 #endregion
 
