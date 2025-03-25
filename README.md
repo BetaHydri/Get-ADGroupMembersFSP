@@ -36,6 +36,8 @@ CN=Test01,OU=Groups,OU=LABSFAB,DC=labsfab,DC=fabrikam,DC=com | group | LABSFAB\T
 CN=Tim Hoff,OU=Users,OU=LABSFAB,DC=labsfab,DC=fabrikam,DC=com             | user | LABSFAB\Tim | 1
 
 ### ADDITIONAL OUTPUT:
+```
 Initial Group Name: [GroupName]
 Total Members: [Total Members Count]
 Total Unique Members: [Total Unique Members Count]
+```
