@@ -29,11 +29,11 @@ SAMPLE4:
 OUTPUT as [PsCustomObject]:
 |DistinguishedName                                                              | ObjectClass    | NTAccount | Occurrences
 :-------------------------------------------------------------------------------|:---------------|:-------------------------------|:-----------
-CN=AutoDL System Account,OU=CoreIdentity,DC=redmond,DC=contoso,DC=com           | user           | REDMOND\adlsys    | 1
-CN=Exchange Domain Servers,CN=Users,DC=africa,DC=contoso,DC=com                 | group          | AFRICA\Exchange Domain Servers | 1
-CN=Exchange Domain Servers,CN=Users,DC=redmond,DC=contoso,DC=com                | group          | REDMOND\Exchange Domain Servers | 1
-CN=S-1-5-11\0ACNF:df5167ba-e8fb-4de2-958d-720652128486,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com | foreignSecurityPrincipal | NT AUTHORITY\Authenticated Users | 2
-CN=S-1-1-0,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com             | foreignSecurityPrincipal | Everyone | 1
+CN=CN=S-1-5-21-190482134-350692921-3341096118-1108,CN=ForeignSecurityPrincipals,DC=mylabs,DC=contoso,DC=com           | foreignSecurityPrincipal           | LABSFAB\APP01-Fabrikam-Group    | 1
+CN=Markus Helf,OU=Users,OU=LABSFAB,DC=labsfab,DC=fabrikam,DC=com                 | user          | LABSFAB\markus | 2
+CN=Administrator,CN=Users,DC=labsfab,DC=fabrikam,DC=com                | user          | LABSFAB\Administrator | 1
+CN=Test01,OU=Groups,OU=LABSFAB,DC=labsfab,DC=fabrikam,DC=com | group | LABSFAB\Test01 | 1
+CN=Tim Hoff,OU=Users,OU=LABSFAB,DC=labsfab,DC=fabrikam,DC=com             | user | LABSFAB\Tim | 1
 
 ### ADDITIONAL OUTPUT:
 Initial Group Name: [GroupName]
