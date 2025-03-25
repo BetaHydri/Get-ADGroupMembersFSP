@@ -404,19 +404,25 @@ switch ($Recursive) {
     }
 }
 
-# Display the initial GroupName and the sum of the nested members
+# Count unique members and add a column for the number of occurrences
+$uniqueMembers = $global:memberDNs | Group-Object -Property DistinguishedName | ForEach-Object {
+    $_.Group[0] | Add-Member -MemberType NoteProperty -Name 'Occurrences' -Value $_.Count -PassThru
+}
+
+# Display the initial GroupName and the sum of the unique nested members
 $initialGroupName = $GroupName
-$nestedMembersCount = ($global:memberDNs).Count
+$uniqueMembersCount = $uniqueMembers.Count
 Write-Host "Initial Group Name: $initialGroupName" -ForegroundColor Yellow
-Write-Host "Sum of Nested Members: $nestedMembersCount" -ForegroundColor Yellow
+Write-Host "Total Members: $($global:memberDNs.Count)" -ForegroundColor Yellow
+Write-Host "Total Unique Members: $uniqueMembersCount" -ForegroundColor Yellow
 
 # Export the results to CSV if the OutputCsvFile parameter is provided
 if ($OutputCsvFile) {
-    $global:memberDNs | Export-Csv -Path $OutputCsvFile -NoTypeInformation -Delimiter $CsvDelimiter
+    $uniqueMembers | Export-Csv -Path $OutputCsvFile -NoTypeInformation -Delimiter $CsvDelimiter
     Write-Host "Results exported to $OutputCsvFile with delimiter '$CsvDelimiter'" -ForegroundColor Green
 }
 
-$global:memberDNs
+$uniqueMembers
 #endregion
 
 # End of script
