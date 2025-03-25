@@ -2,7 +2,7 @@
 <#PSScriptInfo
  
 .VERSION
-2.0.1
+2.0.2
 
 .GUID
 c05766cc-8031-45fe-a45f-cd1420c642ce

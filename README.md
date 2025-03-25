@@ -27,14 +27,15 @@ SAMPLE4:
 ```
 
 OUTPUT as [PsCustomObject]:
-|DistinguishedName                                                              | ObjectClass    | NTAccount
-:-------------------------------------------------------------------------------|:---------------|:-------------------------------
-CN=AutoDL System Account,OU=CoreIdentity,DC=redmond,DC=contoso,DC=com           | user           | REDMOND\adlsys    
-CN=Exchange Domain Servers,CN=Users,DC=africa,DC=contoso,DC=com                 | group          | AFRICA\Exchange Domain Servers
-CN=Exchange Domain Servers,CN=Users,DC=redmond,DC=contoso,DC=com                | group          | REDMOND\Exchange Domain Servers
-CN=S-1-5-11\0ACNF:df5167ba-e8fb-4de2-958d-720652128486,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com | foreignSecurityPrincipal | NT AUTHORITY\Authenticated Users
-CN=S-1-1-0,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com             | foreignSecurityPrincipal | Everyone
+|DistinguishedName                                                              | ObjectClass    | NTAccount | Occurrences
+:-------------------------------------------------------------------------------|:---------------|:-------------------------------|:-----------
+CN=AutoDL System Account,OU=CoreIdentity,DC=redmond,DC=contoso,DC=com           | user           | REDMOND\adlsys    | 1
+CN=Exchange Domain Servers,CN=Users,DC=africa,DC=contoso,DC=com                 | group          | AFRICA\Exchange Domain Servers | 1
+CN=Exchange Domain Servers,CN=Users,DC=redmond,DC=contoso,DC=com                | group          | REDMOND\Exchange Domain Servers | 1
+CN=S-1-5-11\0ACNF:df5167ba-e8fb-4de2-958d-720652128486,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com | foreignSecurityPrincipal | NT AUTHORITY\Authenticated Users | 2
+CN=S-1-1-0,CN=ForeignSecurityPrincipals,DC=europe,DC=contoso,DC=com             | foreignSecurityPrincipal | Everyone | 1
 
 ### ADDITIONAL OUTPUT:
 Initial Group Name: [GroupName]
-Sum of Nested Members: [Count]
+Total Members: [Total Members Count]
+Total Unique Members: [Total Unique Members Count]
